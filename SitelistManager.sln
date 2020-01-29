@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitelistManager", "SitelistManager.csproj", "{FBB5A58B-ACC2-475A-87A7-5F7513D087E4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FBB5A58B-ACC2-475A-87A7-5F7513D087E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBB5A58B-ACC2-475A-87A7-5F7513D087E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBB5A58B-ACC2-475A-87A7-5F7513D087E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBB5A58B-ACC2-475A-87A7-5F7513D087E4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DE112841-781A-4A8E-AA2F-9482222225C0}
+	EndGlobalSection
+EndGlobal
