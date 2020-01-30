@@ -11,6 +11,18 @@ namespace SitelistManager
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
                         "~/Scripts/jquery-{version}.js"));
 
+            bundles.Add(new ScriptBundle("~/bundles/jqueryui").Include(
+                        "~/Scripts/jquery-ui-{version}.js"));
+
+            bundles.Add(new StyleBundle("~/Content/themes/base/css").Include(
+                        "~/Content/themes/base/all.css"));
+
+            bundles.Add(new ScriptBundle("~/bundles/datatables").Include(
+                        "~/Scripts/DataTables/jquery.dataTables.min.js"));
+
+            bundles.Add(new StyleBundle("~/Content/DataTables/css").Include(
+                        "~/Content/DataTables/css/jquery.dataTables.min.css"));
+
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
                         "~/Scripts/jquery.validate*"));
 
