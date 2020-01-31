@@ -1,0 +1,46 @@
+<h2>XML Preview</h2>
+
+<pre lang="xml" id="displayXml"></pre>
+
+@section Scripts{
+    <script type="text/javascript" src="@Url.Content("~/Scripts/myscript.js")"></script>
+    <script type="text/javascript">
+        // Action: Most of the script is probably redundant as compared to Site/Index.cshtml. Could be refactored.
+        var sites = new Array();
+
+        var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
+        var db;
+
+        if (!window.indexedDB) {
+            alert("Your browser doesn't support IndexedDB");
+        }
+
+        window.onload = function () {
+            initIndexedDB();
+        }
+
+        function initIndexedDB() {
+            var request = indexedDB.open("SiteDB", 1);
+
+            request.onsuccess = function (event) {
+                db = request.result;
+                displayXMLPreview();
+            };
+
+            request.onerror = function (event) {
+                console.log("IndexedDB error: " + event.target.errorCode);
+            };
+
+            request.onupgradeneeded = function (event) {
+                var objectStore = event.currentTarget.result.createObjectStore("sites", { keyPath: "id", autoIncrement: true });
+            };
+        }
+
+        function displayXMLPreview() {
+            getXMLDisplayString().then( data => {
+                document.getElementById("displayXml").textContent = data;
+            });
+        }
+
+    </script>
+}

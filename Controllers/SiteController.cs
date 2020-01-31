@@ -13,5 +13,11 @@ namespace SitelistManager.Controllers
         {
             return View();
         }
+
+        // GET: Site/XMLPreview
+        public ActionResult XMLPreview()
+        {
+            return View();
+        }
     }
 }

@@ -1,1 +1,632 @@
 <h2>EMIE Sitelist Manager</h2>
+
+<div style="width:100%;text-align:left;clear:both">
+    <button id="btnAddNewSite">
+        Add New Site
+    </button>
+
+    <button id="btnImportFromXML">
+        Import From XML
+    </button>
+
+    <button onclick="location.href = 'Site/XMLPreview'">
+        XML Preview
+    </button>
+
+    <button id="btnSaveToXML">
+        Save To XML
+    </button>
+
+    <button id="btnClearList">
+        Clear List
+    </button>
+
+    <table id="tableSites" class="display" cellspacing="0" data-page-length='5' hidden>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Url</th>
+                <th>OpenIn</th>
+                <th>StandaloneIE</th>
+                <th>AllowRedirect</th>
+                <th>CompatMode</th>
+                <th>Comment</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+    </table>
+
+    <div id="dialog-add-edit-site" title="Add New Site" hidden>
+        <div>
+            <div class="row">
+                <div class="col-md-4 invisible">ID</div>
+                <div id="id" class="col-md-6">
+                    <input type="number" id="txtId" class="text ui-widget-content ui-corner-all invisible" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">Url</div>&nbsp;
+                <div id="name" class="col-md-6">
+                    <input type="text" id="txtUrl" />
+                </div>
+            </div>
+
+            <div class="row" style="padding-top:5px">
+                <div class="col-md-4">OpenIn</div>&nbsp;
+                <div id="blog" class="col-md-6">
+                    <select id="txtOpenIn">
+                        <option value="None">None</option>
+                        <option value="IE11">IE11</option>
+                        <option value="MSEdge">MSEdge</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" style="padding-top:5px">
+                <div class="col-md-4">StandaloneIE</div>&nbsp;
+                <div id="blog1" class="col-md-6">
+                    <input type="checkbox" id="txtStandaloneIE" />
+                </div>
+            </div>
+
+            <div class="row" style="padding-top:5px">
+                <div class="col-md-4">AllowRedirect</div>&nbsp;
+                <div id="blog2" class="col-md-6">
+                    <input type="checkbox" id="txtAllowRedirect" />
+                </div>
+            </div>
+
+            <div class="row" style="padding-top:5px">
+                <div class="col-md-4">CompatMode</div>&nbsp;
+                <div id="location" class="col-md-6">
+                    <select name="Id" id="txtCompatMode">
+                        <option value="Default">Default Mode</option>
+                        <option value="IE8Enterprise">IE8 Enterprise Mode</option>
+                        <option value="IE7Enterprise">IE7 Enterprise Mode</option>
+                        <option value="IE11">IE11 Document Mode</option>
+                        <option value="IE10">IE10 Document Mode</option>
+                        <option value="IE9">IE9 Document Mode</option>
+                        <option value="IE8">IE8 Document Mode</option>
+                        <option value="IE7">IE7 Document Mode</option>
+                        <option value="IE5">IE5 Document Mode</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" style="padding-top:5px">
+                <div class="col-md-4">Comment</div>&nbsp;
+                <div id="location1" class="col-md-6">
+                    <input type="text" name="Id" id="txtComment" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dialog-site-already-exists" title="Site Already Exists" hidden>
+        <div style="padding-top:10px">
+            <p>This site already exists and was not added to the list. Please search for it and edit it if necessary.</p>
+        </div>
+    </div>
+
+    <div id="dialog-import-from-xml" title="Import From XML" hidden>
+        <div style="padding-top:5px">
+            <p>Select an XML file:</p>
+            <input type="file" id="fileToLoad"></input>
+        </div>
+    </div>
+
+    <div id="dialog-display-duplicated-sites" title="Display Duplicated Sites" hidden>
+        <div style="padding-top:10px">
+            <p>The following sites already exists and were not added to the list. Please search for them and edit them manually if necessary.</p>
+            <ul id="displayDuplicatedSites"><ul>
+        </div>
+    </div>
+
+    <div id="dialog-save-to-xml" title="Save To XML" hidden>
+        <div style="padding-top:5px">
+            <p>Please input the file name:</p>
+            <input type="text" id="inputFileNameToSaveAs"></input>
+            <span>.xml</span>
+        </div>
+    </div>
+
+    <div id="dialog-clear-list" title="Clear List" hidden>
+        <div style="padding-top:10px">
+            <p>Do you really mean to clear the whole list?</p>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts{
+    <script type="text/javascript" src="@Url.Content("~/Scripts/myscript.js")"></script>
+    <script type="text/javascript">
+
+        var sites = new Array();
+        var sitesSet = new Set();
+
+        var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
+        var db;
+
+        if (!window.indexedDB) {
+            alert("Your browser doesn't support IndexedDB");
+        }
+
+        window.onload = function () {
+            initIndexedDB();
+            initJQueryGrid();
+        }
+
+        function initIndexedDB() {
+            var request = indexedDB.open("SiteDB", 1);
+
+            request.onsuccess = function (event) {
+                db = request.result;
+                showAllRecords();
+            };
+
+            request.onerror = function (event) {
+                console.log("IndexedDB error: " + event.target.errorCode);
+            };
+
+            request.onupgradeneeded = function (event) {
+                var objectStore = event.currentTarget.result.createObjectStore("sites", { keyPath: "id", autoIncrement: true });
+            };
+        }
+
+        $("#dialog-add-edit-site").dialog({
+            autoOpen: false,
+            height: 400,
+            width: 350,
+            modal: true,
+            open: function (event, ui) {
+                $('#dialog-add-edit-site').css('overflow-x', 'hidden');
+            },
+            buttons: {
+                "Save": function () {
+                    if ($("#txtId").val() == 0) {
+                        addNewRecord();
+                    }
+                    else {
+                        editExistingRecord();
+                    }
+
+                    $(this).dialog("close");
+                },
+                "Cancel": function () {
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+
+        $("#dialog-site-already-exists").dialog({
+            autoOpen: false,
+            height: 200,
+            width: 350,
+            modal: true,
+            buttons: {
+                "Got it": function () {
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+
+        $("#dialog-import-from-xml").dialog({
+            autoOpen: false,
+            height: 180,
+            width: 350,
+            modal: true,
+            buttons: {
+                "Load": function () {
+                    importFromXML();
+
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+
+        $("#dialog-display-duplicated-sites").dialog({
+            autoOpen: false,
+            height: 320,
+            width: 420,
+            modal: true,
+            open: function() {
+                var duplicatedSites = $("#dialog-display-duplicated-sites").data('duplicatedSites');
+                displayDuplicatedSites(duplicatedSites);
+            },
+            buttons: {
+                "Got it": function () {
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+
+        $("#dialog-save-to-xml").dialog({
+            autoOpen: false,
+            height: 180,
+            width: 350,
+            modal: true,
+            buttons: {
+                "Save": function () {
+                    saveToXML();
+
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+
+        $("#dialog-clear-list").dialog({
+            autoOpen: false,
+            height: 160,
+            width: 350,
+            modal: true,
+            buttons: {
+                "No": function () {
+                    $(this).dialog("close");
+                },
+                "Yes": function () {
+                    clearList();
+
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+
+        function showAllRecords() {
+            var transaction = db.transaction(["sites"], "readwrite");
+            var objectStore = transaction.objectStore("sites");
+            var request = objectStore.openCursor();
+
+            request.onsuccess = function (event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    sites.push({
+                        "Id": cursor.key,
+                        "Url": cursor.value.url,
+                        "OpenIn": cursor.value.openIn,
+                        "StandaloneIE": cursor.value.standaloneIE,
+                        "AllowRedirect": cursor.value.allowRedirect,
+                        "CompatMode": cursor.value.compatMode,
+                        "Comment": cursor.value.comment
+                    });
+                    sitesSet.add(cursor.value.url);
+                    cursor.continue();
+                }
+                else {
+                    //After reading all sites from IndexedDB, add all sites data to JQuery Grid
+                    $('#tableSites').DataTable().rows.add(sites).draw();
+                };
+            }
+        }
+
+        function addNewRecord() {
+            var pUrl = $('#txtUrl').val();
+            var pOpenIn = $('#txtOpenIn').val();
+            var pStandaloneIE = $('#txtStandaloneIE').is(':checked');
+            var pAllowRedirect = $('#txtAllowRedirect').is(':checked');
+            var pCompatMode = $('#txtCompatMode').val();
+            var pComment = $('#txtComment').val();
+
+            if (sitesSet.has(pUrl)) {
+                $('#dialog-site-already-exists').dialog('option', 'title', 'Warning');
+                $("#dialog-site-already-exists").dialog("open");
+                return;
+            }
+
+            var transaction = db.transaction(["sites"], "readwrite");
+            var objectStore = transaction.objectStore("sites");
+            var request = objectStore.add({ url: pUrl, openIn: pOpenIn, standaloneIE: pStandaloneIE, allowRedirect: pAllowRedirect, compatMode: pCompatMode, comment: pComment });
+
+            request.onsuccess = function (event) {
+                var prd = new Array();
+
+                prd.push({
+                    "Id": event.target.result,
+                    "Url": pUrl,
+                    "OpenIn": pOpenIn,
+                    "StandaloneIE": pStandaloneIE,
+                    "AllowRedirect": pAllowRedirect,
+                    "CompatMode": pCompatMode,
+                    "Comment": pComment
+                });
+
+                sites.push({
+                    "Id": event.target.result,
+                    "Url": pUrl,
+                    "OpenIn": pOpenIn,
+                    "StandaloneIE": pStandaloneIE,
+                    "AllowRedirect": pAllowRedirect,
+                    "CompatMode": pCompatMode,
+                    "Comment": pComment
+                });
+
+                sitesSet.add(pUrl);
+
+                $('#tableSites').DataTable().rows.add(prd).draw();
+            };
+        }
+
+        function editExistingRecord() {
+            var transaction = db.transaction(["sites"], "readwrite");
+            var objectStore = transaction.objectStore("sites");
+
+            var pId = parseInt($("#txtId").val());
+
+            var result = sites.find(x => x.Id == pId);
+            var i = sites.indexOf(result);
+            
+            objectStore.get(pId).onsuccess = function (event) {
+                var record = event.target.result;
+
+                record.id = pId;
+                record.url = $("#txtUrl").val();
+                record.openIn = $("#txtOpenIn").val();
+                record.standaloneIE = $("#txtStandaloneIE").is(':checked');
+                record.allowRedirect = $("#txtAllowRedirect").is(':checked');
+                record.compatMode = $("#txtCompatMode").val();
+                record.comment = $("#txtComment").val();
+
+                if (i != -1) {
+                    if (record.url != sites[i].Url && sitesSet.has(record.url)) {
+                        $('#dialog-site-already-exists').dialog('option', 'title', 'Warning');
+                        $("#dialog-site-already-exists").dialog("open");
+                        return;
+                    }
+                }
+
+                if (i != -1) {
+                    sitesSet.delete(sites[i].Url);
+                    sitesSet.add(record.url);
+
+                    sites[i].Id = record.id;
+                    sites[i].Url = record.url;
+                    sites[i].OpenIn = record.openIn;
+                    sites[i].StandaloneIE = record.standaloneIE;
+                    sites[i].AllowRedirect = record.allowRedirect;
+                    sites[i].CompatMode = record.compatMode;
+                    sites[i].Comment = record.comment;
+                }
+
+                objectStore.put(record).onsuccess = function (event) {
+                    $('#tableSites').DataTable().clear();
+                    $('#tableSites').DataTable().rows.add(sites).draw();
+                    console.log('Updated successfully!');
+                }
+            }
+        }
+
+        function importFromXML()
+        {
+            var file = document.getElementById("fileToLoad").files[0];
+            var fileReader = new FileReader();
+            fileReader.onload = function (event)
+            {
+                var xmlString = fileReader.result;
+                parseAndStoreXML(xmlString);
+            };
+            fileReader.readAsText(file, "UTF-8");
+        }
+
+        function parseAndStoreXML(xmlString)
+        {
+            var transaction = db.transaction(["sites"], "readwrite");
+            var objectStore = transaction.objectStore("sites");
+            var duplicatedSites = new Set();
+            var xmlDoc = $.parseXML(xmlString),
+            $xml = $(xmlDoc);
+            $xml.find("site").each(function () {
+                var pUrl = $(this).attr("url");
+                var pOpenIn = $(this).find("open-in").text();
+                var pStandaloneIE = $(this).find("open-in").is("[app]") ? true : false;
+                var pAllowRedirect = $(this).find("open-in").is("[allow-redirect]") ? true : false;
+                var pCompatMode = $(this).find("compat-mode").text();
+                var pComment = $(this).is("[comment]") ? $(this).attr("comment") : "";
+
+                if (sitesSet.has(pUrl)) {
+                    duplicatedSites.add(pUrl);
+                    // Skip this iteration
+                    return;
+                }
+
+                var request = objectStore.add({ url: pUrl, openIn: pOpenIn, standaloneIE: pStandaloneIE, allowRedirect: pAllowRedirect, compatMode: pCompatMode, comment: pComment });
+
+                request.onsuccess = function (event) {
+                    var prd = new Array();
+
+                    prd.push({
+                        "Id": event.target.result,
+                        "Url": pUrl,
+                        "OpenIn": pOpenIn,
+                        "StandaloneIE": pStandaloneIE,
+                        "AllowRedirect": pAllowRedirect,
+                        "CompatMode": pCompatMode,
+                        "Comment": pComment
+                    });
+
+                    sites.push({
+                        "Id": event.target.result,
+                        "Url": pUrl,
+                        "OpenIn": pOpenIn,
+                        "StandaloneIE": pStandaloneIE,
+                        "AllowRedirect": pAllowRedirect,
+                        "CompatMode": pCompatMode,
+                        "Comment": pComment
+                    });
+
+                    sitesSet.add(pUrl);
+
+                    $('#tableSites').DataTable().rows.add(prd).draw();
+                };
+            });
+
+            if (duplicatedSites.size != 0) {
+                $('#dialog-display-duplicated-sites').dialog('option', 'title', 'Warning');
+                $("#dialog-display-duplicated-sites").data('duplicatedSites', duplicatedSites).dialog("open");
+            }
+        }
+
+        function displayDuplicatedSites(duplicatedSites) {
+            var ul = document.getElementById("displayDuplicatedSites");
+            ul.innerHTML = '';
+            duplicatedSites.forEach(function(value) {
+                var li = document.createElement('li');
+                li.innerHTML += value;
+                document.getElementById("displayDuplicatedSites").appendChild(li);
+            });
+        }
+
+        function saveToXML()
+        {
+            getXMLDisplayString().then( data => {
+                var blob = new Blob([data], {type:"text/plain"});
+                var url = window.URL.createObjectURL(blob);
+                var fileName = document.getElementById("inputFileNameToSaveAs").value;
+
+                var anchorElement = document.createElement("a");
+                anchorElement.download = fileName + ".xml";
+                anchorElement.innerHTML = "Download File";
+                anchorElement.href = url;
+                anchorElement.onclick = destroyClickedElement;
+                anchorElement.style.display = "none";
+                document.body.appendChild(anchorElement);
+
+                anchorElement.click();
+            });
+        }
+
+        function destroyClickedElement(event)
+        {
+            document.body.removeChild(event.target);
+        }
+
+        function clearList() {
+            var transaction = db.transaction(["sites"], "readwrite");
+            var objectStore = transaction.objectStore("sites");
+            var request = objectStore.clear();
+
+            request.onsuccess = function (event) {
+                $('#tableSites').DataTable().clear().draw();
+                sites = [];
+                sitesSet.clear();
+
+                console.log("Records deleted successfully!")
+            };
+            request.onerror = function (event) {
+                console.log("Error deleting records");
+            };
+        }
+
+        $('#btnAddNewSite').click(function () {
+            $("#txtId").val(0);
+            $("#txtUrl").val('');
+            $("#txtOpenIn").val('IE11');
+            $("#txtStandaloneIE").prop('checked', false);
+            $("#txtAllowRedirect").prop('checked', false);
+            $("#txtCompatMode").val('Default');
+            $("#txtComment").val('');
+
+            $('#dialog-add-edit-site').dialog('option', 'title', 'Add New Site');
+            $("#dialog-add-edit-site").dialog("open");
+
+        });
+
+        $('#btnImportFromXML').click(function () {
+            $('#dialog-import-from-xml').dialog('option', 'title', 'Import From XML');
+            $("#dialog-import-from-xml").dialog("open");
+
+        });
+
+        $('#btnSaveToXML').click(function () {
+            $('#dialog-save-to-xml').dialog('option', 'title', 'Save To XML');
+            $("#dialog-save-to-xml").dialog("open");
+
+        });
+
+        $('#btnClearList').click(function () {
+            $('#dialog-clear-list').dialog('option', 'title', 'Clear List');
+            $("#dialog-clear-list").dialog("open");
+
+        });
+
+        function initJQueryGrid() {
+
+            var table = $('#tableSites').DataTable({
+                data: null,
+                "bFilter": true,
+                "bInfo": false,
+                "bLengthChange": false,
+                "bPaginate": false,
+                "autoWidth": false,
+                columns: [
+                    { data: "Id", visible: false, searchable: false },
+                    { data: "Url" },
+                    { data: "OpenIn" },
+                    { data: "StandaloneIE" },
+                    { data: "AllowRedirect" },
+                    { data: "CompatMode" },
+                    { data: "Comment" },
+                    { data: "Action", defaultContent: "<button class='btn-edit'>Edit</button></div> &nbsp; <button class='btn-delete'>Delete</button>" }
+                ],
+                "initComplete": function() {
+                    $('#tableSites').show();
+                }
+            });
+
+            $('#tableSites tbody').on('click', '.btn-delete', function () {
+
+                var selectedSite = table.row($(this).parents('tr')).data();
+
+                deleteRecord(selectedSite["Id"]);
+            });
+
+            $('#tableSites tbody').on('click', '.btn-edit', function () {
+                var selectedSite = table.row($(this).parents('tr')).data();
+
+                $("#txtId").val(selectedSite["Id"]);
+                $("#txtUrl").val(selectedSite["Url"]);
+                $("#txtOpenIn").val(selectedSite["OpenIn"]);
+                $("#txtStandaloneIE").prop('checked', selectedSite["StandaloneIE"]);
+                $("#txtAllowRedirect").prop('checked', selectedSite["AllowRedirect"]);
+                $("#txtCompatMode").val(selectedSite["CompatMode"]);
+                $("#txtComment").val(selectedSite["Comment"]);
+
+                $('#dialog-add-edit-site').dialog('option', 'title', 'Edit Site');
+                $("#dialog-add-edit-site").dialog("open");
+            });
+        }
+
+        function deleteRecord(id) {
+            var transaction = db.transaction(["sites"], "readwrite");
+            var objectStore = transaction.objectStore("sites");
+            var request = objectStore.delete(parseInt(id));
+
+            request.onsuccess = function (event) {
+                var result = sites.find(x => x.Id == parseInt(id));
+                var i = sites.indexOf(result);
+                sites.splice(i, 1);
+                sitesSet.delete(result.Url);
+                $('#tableSites').DataTable().clear();
+                $('#tableSites').DataTable().rows.add(sites).draw();
+
+                console.log("Record deleted successfully!")
+            };
+            request.onerror = function (event) {
+                console.log("Error deleting record");
+            };
+        }
+
+    </script>
+}
