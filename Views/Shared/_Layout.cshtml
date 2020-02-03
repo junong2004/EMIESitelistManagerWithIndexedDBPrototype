@@ -6,11 +6,12 @@
     <title>@ViewBag.Title - EMIE Sitelist Manager</title>
     @Styles.Render("~/Content/css")
     @Styles.Render("~/Content/themes/base/css")
-    @Styles.Render("~/Content/DataTables/css")
     @Scripts.Render("~/bundles/modernizr")
     @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
     @Scripts.Render("~/bundles/jqueryui")
-    @Scripts.Render("~/bundles/datatables")
+    <script src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <link href="~/Content/DataTables/css/jquery.dataTables.css" rel="stylesheet" />
     <link rel="manifest" href="/manifest.json" />
 </head>
 <body>
@@ -55,7 +56,6 @@
         }
     </script>
 
-    @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)
 </body>
 </html>
