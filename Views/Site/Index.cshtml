@@ -131,7 +131,7 @@
     <div id="dialog-save-to-xml" title="Save To XML" hidden>
         <div style="padding-top:5px">
             <p>Please input the file name:</p>
-            <input type="text" id="inputFileNameToSaveAs" style="padding-left:1.5px"></input>
+            <input type="text" placeholder="sites" id="inputFileNameToSaveAs" style="padding-left:1.5px"></input>
             <span>.xml</span>
         </div>
     </div>
@@ -521,7 +521,7 @@
                 var fileName = document.getElementById("inputFileNameToSaveAs").value;
 
                 var anchorElement = document.createElement("a");
-                anchorElement.download = fileName + ".xml";
+                anchorElement.download = fileName == "" ? "sites.xml" : fileName + ".xml";
                 anchorElement.innerHTML = "Download File";
                 anchorElement.href = url;
                 anchorElement.onclick = destroyClickedElement;
