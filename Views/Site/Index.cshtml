@@ -1,6 +1,6 @@
 <h2>EMIE Sitelist Manager</h2>
 
-<div style="width:100%;text-align:left;clear:both">
+<div style="width:100%;text-align:left;clear:both;padding-top:10px">
     <button id="btnAddNewSite">
         Add New Site
     </button>
@@ -20,6 +20,11 @@
     <button id="btnClearList">
         Clear List
     </button>
+
+    <div style="padding-top:10px">
+        <span>Sitelist Version Number: </span>
+        <span id="siteListVersion" style="padding-left:10px"></span>
+    </div>
 
     <table id="tableSites" class="display" cellspacing="0" data-page-length='5' hidden>
         <thead>
@@ -164,6 +169,7 @@
             request.onsuccess = function (event) {
                 db = request.result;
                 showAllRecords();
+                incrementDisplaySitelistVersionNumber(shouldIncrement = false);
             };
 
             request.onerror = function (event) {
@@ -172,6 +178,7 @@
 
             request.onupgradeneeded = function (event) {
                 var objectStore = event.currentTarget.result.createObjectStore("sites", { keyPath: "id", autoIncrement: true });
+                var versionRequest = event.currentTarget.result.createObjectStore("version").put(0, 'versionNumber');
             };
         }
 
@@ -284,6 +291,19 @@
             close: function () {
             }
         });
+
+        function incrementDisplaySitelistVersionNumber(shouldIncrement) {
+            var request = db.transaction("version").objectStore("version").get("versionNumber");
+            request.onsuccess = function (event) {
+                var versionNumber = shouldIncrement ? event.target.result + 1 : event.target.result;
+                document.getElementById("siteListVersion").textContent = versionNumber == 0 ? "-" : versionNumber;
+                if (shouldIncrement) {
+                    (async () => {
+                        await db.transaction(["version"], "readwrite").objectStore("version").put(versionNumber, "versionNumber");
+                    })()
+                }
+            }
+        }
 
         function showAllRecords() {
             var transaction = db.transaction(["sites"], "readwrite");
@@ -427,6 +447,11 @@
             var duplicatedSites = new Set();
             var xmlDoc = $.parseXML(xmlString),
             $xml = $(xmlDoc);
+            var versionNumber = parseInt($xml.find("site-list").attr("version")) || 0;
+            document.getElementById("siteListVersion").textContent = versionNumber == 0 ? "-" : versionNumber;
+            (async () => {
+                await db.transaction(["version"], "readwrite").objectStore("version").put(versionNumber, "versionNumber");
+            })()
             $xml.find("site").each(function () {
                 var pUrl = $(this).attr("url");
                 var pOpenIn = $(this).find("open-in").text();
@@ -505,6 +530,7 @@
 
                 anchorElement.click();
             });
+            incrementDisplaySitelistVersionNumber(shouldIncrement = true);
         }
 
         function destroyClickedElement(event)
@@ -522,6 +548,10 @@
                 sites = [];
                 sitesSet.clear();
 
+                document.getElementById("siteListVersion").textContent = "-";
+                (async () => {
+                    await db.transaction(["version"], "readwrite").objectStore("version").put(0, "versionNumber");
+                })()
                 console.log("Records deleted successfully!")
             };
             request.onerror = function (event) {

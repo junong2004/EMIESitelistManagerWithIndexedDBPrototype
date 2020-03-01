@@ -1,9 +1,17 @@
 function getXMLDisplayString() {
     return new Promise((resolve, reject) => {
+        var displayString;
+        var versionRequest = db.transaction("version").objectStore("version").get("versionNumber");
+        versionRequest.onsuccess = function (event) {
+            var updatedVersionNumber = event.target.result + 1;
+            displayString = "<site-list version=\"" + updatedVersionNumber.toString() + "\">" + "\n";
+        }
+        versionRequest.onerror = function (event) {
+            displayString = "<site-list version=\"0\">" + "\n";
+        }
         var transaction = db.transaction(["sites"], "readwrite");
         var objectStore = transaction.objectStore("sites");
         var request = objectStore.openCursor();
-        var displayString = "<site-list version=\"pending\">" + "\n";
 
         request.onsuccess = function (event) {
             var cursor = event.target.result;
